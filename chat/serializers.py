@@ -25,8 +25,10 @@ class ThreadSerializer(serializers.ModelSerializer):
         fields=['id','user1','user2','created_at']
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender=UserSerializer(read_only=True)
+    sender = UserSerializer(read_only=True)
+    thread = serializers.PrimaryKeyRelatedField(read_only=True)  # <-- make read-only
 
     class Meta:
-        model=Message
-        fields=['id','thraed','sender','message','timestamp']
+        model = Message
+        fields = ['id', 'thread', 'sender', 'content', 'timestamp']
+        read_only_fields = ['id', 'thread', 'sender', 'timestamp']

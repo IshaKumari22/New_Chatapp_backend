@@ -8,6 +8,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from .serializers import ThreadSerializer,MessageSerializer
 from rest_framework.views import APIView
 from .models import Thread,Message
+from rest_framework import serializers
 
 class RegisterView(generics.CreateAPIView):
     queryset=User.objects.all()
@@ -42,7 +43,7 @@ class ThreadView(APIView):
         try:
             user2=User.objects.get(id=user2_id)
         except User.DoesNotExist:
-            return response({"error":"User not found"},status=404)
+            return Response({"error":"User not found"},status=404)
         
         thread,created=Thread.objects.get_or_create(
             user1=min(user1,user2,key=lambda u:u.id),
@@ -50,14 +51,18 @@ class ThreadView(APIView):
         )
         return Response(ThreadSerializer(thread).data)
     
-class MessageListView(generics.ListCreateAPIView):
+class MessageListCreateView(generics.ListCreateAPIView):
     serializer_class=MessageSerializer
     permission_classes=[permissions.IsAuthenticated]
 
     def get_queryset(self):
         thread_id=self.kwargs['thread_id']
-        return Message.objects.filter(thread_id=thread_id)
+        return Message.objects.filter(thread_id=thread_id).order_by("timestamp")
     
     def perform_create(self,serializer):
         thread_id=self.kwargs['thread_id']
-        serializer.save(sender=self.request.user,thread_id=thread_id)
+        try:
+           thread=Thread.objects.get(id=thread_id)
+        except Thread.DoesNotExist:
+            raise serializers.ValidationError({"error":"Thread not found"})
+        serializer.save(sender=self.request.user,thread=thread)
