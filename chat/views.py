@@ -101,12 +101,13 @@ class MessageListCreateView(generics.ListCreateAPIView):
         serializer.save(sender=self.request.user,thread=thread)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def user_list(request):
     # Exclude the currently logged-in user
-    users = User.objects.exclude(id=request.user.id)
-    data = [{"id": u.id, "username": u.username} for u in users]
-    return Response(data)
+    current_user=request.user
+    users = User.objects.exclude(id=current_user.id)
+    serializer=UserSerializer(users,many=True)
+    return Response(serializer.data)
 class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -114,3 +115,23 @@ class RegisterView(APIView):
             user = serializer.save()
             return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def start_thread(request,user_id):
+    current_user=request.user
+    try:
+        other_user=User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error":"User not found ."},status=status.HTTP_404_NOT_FOUND)
+    thread=Thread.objects.filter(
+        user1=current_user,user2=other_user
+    ).first() or Thread.objects.filter(
+        user1=other_user,user2=current_user
+    ).first()
+
+    if not thread:
+        thread=Thread.objects.create(user1=current_user,user2=other_user)
+    
+    serializer=ThreadSerializer(thread)
+    return Response(serializer.data)
