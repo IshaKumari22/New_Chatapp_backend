@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'channels',
     'chat',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK={
@@ -48,6 +49,9 @@ REST_FRAMEWORK={
         'rest_framework.authentication.TokenAuthentication',
     ),
 }
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -56,7 +60,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'chat_project.urls'
 

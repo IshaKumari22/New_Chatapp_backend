@@ -4,8 +4,9 @@ from .models import Thread,Message
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
-        fields=['id','username','email','password']
-        extra_kwargs={'password':{'write_only':True}}
+        fields=['id','username']
+        #         ,'email','password']
+        # extra_kwargs={'password':{'write_only':True}}
 
     def create(self,validated_data):
         user=User(
@@ -32,3 +33,26 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ['id', 'thread', 'sender', 'content', 'timestamp']
         read_only_fields = ['id', 'thread', 'sender', 'timestamp']
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password']
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("⚠️ Username already taken, please try another one.")
+        return value
+
+    def create(self, validated_data):
+     user = User(
+        username=validated_data['username'],
+        email=validated_data.get('email', '')
+     )
+     user.set_password(validated_data['password'])  # ✅ hashes password
+     user.save()
+     return user
+
+
+
