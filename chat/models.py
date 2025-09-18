@@ -6,6 +6,7 @@ class Thread(models.Model):
     user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='thread_user2')
     created_at = models.DateTimeField(auto_now_add=True)
 
+
 class Message(models.Model):
     thread = models.ForeignKey(Thread, on_delete=models.CASCADE)
     sender = models.ForeignKey(User, on_delete=models.CASCADE)

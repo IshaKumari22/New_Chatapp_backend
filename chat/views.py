@@ -63,6 +63,27 @@ class ThreadView(APIView):
             thread.save()
 
         return Response({"thread_id": thread.id})
+class ThreadListCreateView(generics.ListCreateAPIView):
+    serializer_class = ThreadSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Fetch threads where logged-in user is either user1 or user2
+        user = self.request.user
+        return Thread.objects.filter(user1=user) | Thread.objects.filter(user2=user)
+
+    def perform_create(self, serializer):
+        user1 = self.request.user
+        user2_id = self.request.data.get('user2')
+        user2 = User.objects.get(id=user2_id)
+        
+        # Check if thread already exists
+        thread = Thread.objects.filter(user1=user1, user2=user2).first() or \
+                 Thread.objects.filter(user1=user2, user2=user1).first()
+        if thread:
+            serializer.instance = thread  # return existing thread
+        else:
+            serializer.save(user1=user1, user2=user2)
 class MessageListCreateView(generics.ListCreateAPIView):
     serializer_class=MessageSerializer
     permission_classes=[permissions.IsAuthenticated]
