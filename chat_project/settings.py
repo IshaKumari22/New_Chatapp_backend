@@ -70,7 +70,7 @@ ROOT_URLCONF = 'chat_project.urls'
 ASGI_APPLICATION='chat_project.asgi.application'
 
 
-CHANNELS_LAYERS={
+CHANNEL_LAYERS={
     "default":{
         "BACKEND":"channels_redis.core.RedisChannelLayer",
         "CONFIG":{
