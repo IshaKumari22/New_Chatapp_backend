@@ -5,3 +5,4 @@ python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
  daphne chat_project.asgi:application
+download link of tinnylamma - https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0/tree/main
