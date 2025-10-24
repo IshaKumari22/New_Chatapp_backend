@@ -1,9 +1,9 @@
-import json
-import subprocess
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-
+import json
 from django.contrib.auth import get_user_model
+
+# User=get_user_model
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -50,19 +50,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'timestamp':saved_message.timestamp.isoformat()
             }
         )
-        if sender_username!="AI":
-          ai_response=await self.get_tinyllama_response(message)
-          saved_ai=await self.save_message(self.thread_id,"AI",ai_response)
-          await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type':'chat_message',
-                'id':saved_ai.id if saved_ai else None,
-                'message':ai_response,
-                'sender':'AI',
-                'timestamp':saved_ai.timestamp.isoformat() if saved_ai else None
-         }
-    )    
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
@@ -81,34 +68,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'timestamp':msg.timestamp.isoformat()
                 }
                 for msg in messages
-
             ][::-1]
         except Thread.DoesNotExist:
             return[]
-
+    @database_sync_to_async
+    def get_thread(self,thread_id):
+        from .models import Thread
+        return Thread.objects.get(id=thread_id)
+    
     @database_sync_to_async
     def save_message(self,thread_id,sender_username,content):
         from .models import Thread,Message
-        User=get_user_model()
-
         try:
             thread=Thread.objects.get(id=thread_id)
-            if sender_username=='AI':
-                sender,_=User.objects.get_or_create(username='AI',defaults={"password":""})
-            else:
-                sender=User.objects.get(username=sender_username)
+            sender=get_user_model().objects.get(username=sender_username)
             return Message.objects.create(thread=thread,sender=sender,content=content)
-        except (Thread.DoesNotExist,User.DoesNotExist):
+        except (Thread.DoesNotExist, get_user_model().DoesNotExist):
             return None
-        
-
-    async def get_tinyllama_response(self,user_message):
-        try:
-            result=subprocess.run(
-                ["ollama","run","tinyllama",user_message],
-                capture_output=True,
-                text=True
-            )
-            return result.stdout.strip() or "Tinyllama didn't respond."
-        except Exception as e:
-            return f"Error from Tinyllama: {str(e)}"
