@@ -27,12 +27,13 @@ class ThreadSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
-    thread = serializers.PrimaryKeyRelatedField(read_only=True)  # <-- make read-only
+    receiver = UserSerializer(read_only=True)  # ✅ show receiver info
+    thread = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Message
-        fields = ['id', 'thread', 'sender', 'content', 'timestamp']
-        read_only_fields = ['id', 'thread', 'sender', 'timestamp']
+        fields = ['id', 'thread', 'sender', 'receiver', 'content', 'timestamp']
+        read_only_fields = ['id', 'thread', 'sender', 'receiver', 'timestamp']
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
 

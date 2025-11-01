@@ -105,20 +105,34 @@ class ThreadListCreateView(generics.ListCreateAPIView):
             thread.save()
 
 class MessageListCreateView(generics.ListCreateAPIView):
-    serializer_class=MessageSerializer
-    permission_classes=[permissions.IsAuthenticated]
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        thread_id=self.kwargs['thread_id']
+        thread_id = self.kwargs['thread_id']
         return Message.objects.filter(thread_id=thread_id).order_by("timestamp")
-    
-    def perform_create(self,serializer):
-        thread_id=self.kwargs['thread_id']
+
+    def perform_create(self, serializer):
+        thread_id = self.kwargs['thread_id']
         try:
-           thread=Thread.objects.get(id=thread_id)
+            thread = Thread.objects.get(id=thread_id)
         except Thread.DoesNotExist:
-            raise serializers.ValidationError({"error":"Thread not found"})
-        serializer.save(sender=self.request.user,thread=thread)
+            raise serializers.ValidationError({"error": "Thread not found"})
+
+        sender = self.request.user
+        print("Sender:", sender)  # ✅ Debug
+
+        # ✅ Determine the receiver
+        if thread.user1 == sender:
+            receiver = thread.user2
+        elif thread.user2 == sender:
+            receiver = thread.user1
+        else:
+            raise serializers.ValidationError({"error": "Sender not part of this thread"})
+
+        print("Receiver:", receiver)  # ✅ Debug
+
+        serializer.save(sender=sender, receiver=receiver, thread=thread)
 
 @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
